@@ -14,25 +14,25 @@ class DiscordAlertBot:
         self.args = args
 
         self.time = datetime.datetime.now
-
         self.test_min = self.time().minute+1
         self.test_hr = self.time().hour
 
         #self.client.loop.create_task(AlertMktOpens())
 
-    async def NotifyAllChannels(self, msg):
-        await self.client.wait_until_ready()
-        guilds = self.client.guilds
-        for guild in guilds:
-            for channel in guild.channels:
-                print("Assessing Channel({}): {}".format(channel.type, channel.name))
-                if channel.type == discord.ChannelType.text:
-                    if config['discord']['alertChannels'] is not None and channel.name in config['discord']['alertChannels']:
-                        print("Alerting {}".format( guild ))
-                        await channel.send("Configured: {} {}:{}".format(msg, time().hour, time().minute))
-                    else:
-                        await channel.send("Unconfigured: {} {}:{}".format(msg, time().hour, time().minute))
-                        print("Skipping {}".format( guild ))
+    async def Run(self):
+        print('We have logged in as {0.user}'.format(self.client))
+        if self.args.listGuilds:
+            await self.ListGuilds()
+            await self.client.close()
+            return
+        if self.args.messageAll is not None:
+            await self.NotifyAllChannels(self.args.messageAll)
+            await self.client.close()
+            return
+
+        if self.args.service:
+            self.SpawnService()
+            return
 
     async def ProcessMessage(self, message):
         if message.author == self.client.user:
@@ -41,10 +41,28 @@ class DiscordAlertBot:
         if message.content.startswith('?hello'):
             await message.channel.send('Hello!')
 
-    async def Run(self):
-        print('We have logged in as {0.user}'.format(self.client))
-        await ListGuilds(self.client)
-        await self.client.close()
+    async def NotifyAllChannels(self, msg):
+        await self.client.wait_until_ready()
+        guilds = self.client.guilds
+        for guild in guilds:
+            for channel in guild.channels:
+                print("Assessing Channel({}): {}".format(channel.type, channel.name))
+                if channel.type == discord.ChannelType.text:
+                    if self.config['discord']['alertChannels'] is not None and channel.name in self.config['discord']['alertChannels']:
+                        print("Alerting {}".format( guild ))
+                        await channel.send("Configured: {} {}:{}".format(msg, self.time().hour, self.time().minute))
+                    else:
+                        await channel.send("Unconfigured: {} {}:{}".format(msg, self.time().hour, self.time().minute))
+                        print("Skipping {}".format( guild ))
+
+    async def ListGuilds(self):
+        await self.client.wait_until_ready()
+        for guild in self.client.guilds:
+            for channel in guild.channels:
+                print(
+                    "Available Channel - ID: \"{}\", Name: \"{}\", Type: \"{}\""
+                    .format(channel.id, channel.name, channel.type)
+                )
 
     def Stop(self):
         None

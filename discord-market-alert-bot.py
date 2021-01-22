@@ -15,8 +15,10 @@ opts = argparse.ArgumentParser(
     description="Configurable discord alert bot"
 )
 
-opts.add_argument('-c', '--config', type=str, metavar="./some-config.yaml", help='Use config file <CONFIG>')
-opts.add_argument('-a', '--messageAll', type=str, metavar="TEST Message to all channels", help='Send a test message to all channels.')
+opts.add_argument('-c', '--config', type=str, metavar="./some-config.yaml", help="Use config file <CONFIG>")
+opts.add_argument('-a', '--messageAll', type=str, metavar="TEST Message to all channels", help="Send a test message to all channels.")
+opts.add_argument('-l', '--listGuilds', action="store_true", help="List all channels and their unique id's")
+opts.add_argument('-s', '--service', action="store_true", help="Run as service, don't terminate")
 
 args = opts.parse_args()
 
