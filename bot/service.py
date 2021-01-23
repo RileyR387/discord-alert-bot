@@ -117,6 +117,10 @@ class DiscordAlertBot:
 
     def _defaultChannelId(self):
         default = None
+        # if alert channels are configured, attempt to use the first one in case a default isn't set
+        if "channelIds" in self.config["alerts"]:
+            default = self.config["alerts"]["channelIds"][0]
+
         if "defaultChannelId" in self.config:
             default = self.config["defaultChannelId"]
         res = os.getenv("DISCORD_DEFAULT_CHANNELID", default=default)
