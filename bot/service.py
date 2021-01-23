@@ -50,28 +50,15 @@ class DiscordAlertBot:
         return
 
     async def RunSchedule(self):
-        #self.SpawnService()
         self.stopChannel.clear()
         await self._schedLoopAsync()
-        #self.schedule.run_pending()
-
-
-    def _schedLoop(self):
-        while not self.stopChannel.is_set():
-            self.schedule.run_pending()
-            print("Scheduler Running")
-            time.sleep(1)
-            #await asyncio.sleep(1)
 
     async def _schedLoopAsync(self):
         while not self.stopChannel.is_set():
             self.schedule.run_pending()
-            print("Scheduler Running")
             await asyncio.sleep(1)
+        return
 
-    def SpawnService(self):
-        t = threading.Thread(target=self._schedLoop)
-        t.start()
     def Stop(self):
         self.stopChannel.set()
         None
@@ -84,23 +71,6 @@ class DiscordAlertBot:
             for alertDay in opts["days"]:
                 for channelId in channelIds:
                     getattr(self.schedule.every(), alertDay).at(alertTime).do(self.QueueMessage, channelId=channelId, msg=msg)
-
-    def _getChannelIds(self):
-        if "channelIds" in self.config["alerts"]:
-            return self.config["alerts"]["channelIds"]
-        else:
-            return [self._defaultChannelId()]
-
-    def _defaultChannelId(self):
-        default = None
-        if "defaultChannelId" in self.config:
-            default = self.config["defaultChannelId"]
-        res = os.getenv("DISCORD_DEFAULT_CHANNELID", default=default)
-        if res is None:
-            print("Please set DISCORD_DEFAULT_CHANNELID in environment or defaultChannelId in config")
-            sys.exit(1)
-        return res
-
 
     def QueueMessage(self, channelId, msg):
         asyncio.get_event_loop().create_task(
@@ -139,22 +109,19 @@ class DiscordAlertBot:
                     .format(channel.id, channel.name, channel.type)
                 )
 
-## Don't like this approach. Will remove example
-async def AlertMktOpens():
-    await client.wait_until_ready()
-    msg_sent = False
-    time = datetime.datetime.now
-    test_min = self.time().minute+1
-    test_hr = self.time().hour
-
-    while True:
-        if time().hour == 17 and (time().minute == test_min or time().minute == test_min+2):
-            if not msg_sent:
-                await NotifyChannels("Time is: ")
-                msg_sent = True
+    def _getChannelIds(self):
+        if "channelIds" in self.config["alerts"]:
+            return self.config["alerts"]["channelIds"]
         else:
-            print("{}:{}:{}".format(time().hour, time().minute, time().second))
-            msg_sent = False
-        await asyncio.sleep(1)
+            return [self._defaultChannelId()]
 
+    def _defaultChannelId(self):
+        default = None
+        if "defaultChannelId" in self.config:
+            default = self.config["defaultChannelId"]
+        res = os.getenv("DISCORD_DEFAULT_CHANNELID", default=default)
+        if res is None:
+            print("Please set DISCORD_DEFAULT_CHANNELID in environment or defaultChannelId in config")
+            sys.exit(1)
+        return res
 
