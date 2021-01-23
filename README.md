@@ -9,11 +9,19 @@ python3 -m venv venv
 ./venv/bin/discord-alert-bot.py --help
 ```
 
+### Channel ID look up
+To look up channel IDs for configuration, set the bot token and run `./discord-alert-bot.py --listGuilds`
+```
+export DISCORD_BOT_TOKEN="my bots token"
+./discord-alert-bot.py --listGuilds
+```
+Please note that the discord server must first authorize the bot to see the available channels.
+
 ### Usage
 ```
 ./discord-alert-bot.py --help
-usage: discord-alert-bot.py [-h] [-c conf.yaml] [-a msgText]
-                                   [-m msgText] [-i 123456...] [-l] [-s]
+usage: discord-alert-bot.py [-h] [-c conf.yaml] [-a msgText] [-m msgText]
+                            [-i 123456...] [-l] [-t]
 
 Configurable discord alert bot
 
@@ -27,8 +35,9 @@ optional arguments:
                         Message a single channel, requires `-i`
   -i 123456..., --channelId 123456...
                         ChannelID to use with `--message`
-  -l, --listGuilds      List all channels and their unique IDs
-  -s, --service         Run alert service, don't terminate
+  -l, --listGuilds      List all channels and their unique id's
+  -t, --test            Send test message every 10 seconds
+
 ```
 
 ### Environment Variable Overrides
@@ -95,5 +104,5 @@ alerts:
 
 ### Additional Resources
 For information on creating bot tokens check out:
-https://www.freecodecamp.org/news/create-a-discord-bot-with-python/
+  - https://www.freecodecamp.org/news/create-a-discord-bot-with-python/
 

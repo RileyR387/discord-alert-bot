@@ -1,5 +1,6 @@
 
 import os
+import sys
 import discord
 import datetime
 import schedule
@@ -15,11 +16,14 @@ class DiscordAlertBot:
         self.config = config
         self.args = args
 
-        self.schedule = schedule
-        self.InitSchedule()
         self.stopChannel = threading.Event()
+        self.schedule = schedule
 
-        self.schedule.every(10).seconds.do(self.QueueMessage, channelId=660676159259934723, msg="Test Message")
+        if not self.args.listGuilds:
+            self.InitSchedule()
+
+        if self.args.test:
+            self.schedule.every(10).seconds.do(self.QueueMessage, channelId=self._defaultChannelId(), msg="Test Message")
 
     async def RunArgs(self):
         if self.args.listGuilds:
@@ -88,7 +92,14 @@ class DiscordAlertBot:
             return [self._defaultChannelId()]
 
     def _defaultChannelId(self):
-        return os.getenv("DISCORD_DEFAULT_CHANNELID", default=self.config["defaultChannelId"])
+        default = None
+        if "defaultChannelId" in self.config:
+            default = self.config["defaultChannelId"]
+        res = os.getenv("DISCORD_DEFAULT_CHANNELID", default=default)
+        if res is None:
+            print("Please set DISCORD_DEFAULT_CHANNELID in environment or defaultChannelId in config")
+            sys.exit(1)
+        return res
 
 
     def QueueMessage(self, channelId, msg):
