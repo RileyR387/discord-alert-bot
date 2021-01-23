@@ -21,7 +21,7 @@ opts.add_argument('-a', '--messageAll', type=str, metavar="msgText", help="Send 
 opts.add_argument('-m', '--message', type=str, metavar="msgText", help="Message a single channel, requires `-i`")
 opts.add_argument('-i', '--channelId', type=str, metavar="123456...", help="ChannelID to use with `--message`")
 opts.add_argument('-l', '--listGuilds', action="store_true", help="List all channels and their unique id's")
-opts.add_argument('-s', '--service', action="store_true", help="Run as service, don't terminate")
+#opts.add_argument('-s', '--service', action="store_true", help="Run as service, don't terminate")
 
 args = opts.parse_args()
 
@@ -48,14 +48,14 @@ async def RunBotLoop():
     await client.wait_until_ready()
     await bot.RunSchedule()
 
-if args.service:
+if not args.messageAll and not args.message and not args.listGuilds:
     client.loop.create_task(RunBotLoop())
 
 token = ""
 if "discordBotToken" in conf:
-   token = conf["discordBotToken"])
+   token = conf["discordBotToken"]
 
-client.run(os.getenv('DISCORD_TOKEN', default=token))
+client.run(os.getenv('DISCORD_BOT_TOKEN', default=token))
 
 sys.exit(bot.Stop())
 

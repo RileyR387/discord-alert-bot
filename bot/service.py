@@ -7,7 +7,6 @@ import time
 import asyncio
 import threading
 
-from .alertscheduler import AlertScheduler
 from .util import ListGuilds
 
 class DiscordAlertBot:
