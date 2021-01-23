@@ -70,15 +70,14 @@ def AutoLoad(scriptName: str) -> dict:
     """
     Attempt to autoload yaml config based on typical search paths/conventions
     """
-
     scriptName = os.path.basename(scriptName)
     scriptName = re.sub(r"\.py$","", scriptName)
 
     defaultPaths = [
-        './config.yaml',
-        os.path.expanduser('~/etc/labdata-csv.yaml'),
-        os.path.expanduser('~/.labdata-csv.yaml'),
+        './default.yaml',
         './etc/' + scriptName + '.yaml',
+        os.path.expanduser('~/etc/' + scriptName + '.yaml'),
+        os.path.expanduser('~/.' + scriptName + '.yaml'),
         '/etc/' + scriptName + '.yaml'
     ]
     return MergeConfigs(defaultPaths)

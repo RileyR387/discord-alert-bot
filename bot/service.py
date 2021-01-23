@@ -1,8 +1,11 @@
 
+import os
 import discord
 import datetime
+import schedule
 import time
 import asyncio
+import threading
 
 from .alertscheduler import AlertScheduler
 from .util import ListGuilds
@@ -13,47 +16,109 @@ class DiscordAlertBot:
         self.config = config
         self.args = args
 
-        self.time = datetime.datetime.now
-        self.test_min = self.time().minute+1
-        self.test_hr = self.time().hour
+        self.schedule = schedule
+        self.InitSchedule()
+        self.stopChannel = threading.Event()
 
-        #self.client.loop.create_task(AlertMktOpens())
+        self.schedule.every(10).seconds.do(self.QueueMessage, channelId=660676159259934723, msg="Test Message")
 
-    async def Run(self):
-        print('We have logged in as {0.user}'.format(self.client))
+    async def RunArgs(self):
         if self.args.listGuilds:
             await self.ListGuilds()
             await self.client.close()
             return
+
         if self.args.messageAll is not None:
-            await self.NotifyAllChannels(self.args.messageAll)
+            await self.Broadcast(self.args.messageAll)
             await self.client.close()
             return
 
-        if self.args.service:
-            self.SpawnService()
+        if self.args.message is not None:
+            channelId = self._defaultChannelId()
+            if self.args.channelId is not None:
+                channelId = self.args.channelId
+            if channelId is not None:
+                await self.MessageChannel(int(channelId), self.args.message)
+            else:
+                print("Please provide a channelId for message option.")
+            await self.client.close()
             return
 
-    async def ProcessMessage(self, message):
-        if message.author == self.client.user:
-            return
+        return
 
-        if message.content.startswith('?hello'):
-            await message.channel.send('Hello!')
+    async def RunSchedule(self):
+        #self.SpawnService()
+        self.stopChannel.clear()
+        await self._schedLoopAsync()
+        #self.schedule.run_pending()
 
-    async def NotifyAllChannels(self, msg):
+
+    def _schedLoop(self):
+        while not self.stopChannel.is_set():
+            self.schedule.run_pending()
+            print("Scheduler Running")
+            time.sleep(1)
+            #await asyncio.sleep(1)
+
+    async def _schedLoopAsync(self):
+        while not self.stopChannel.is_set():
+            self.schedule.run_pending()
+            print("Scheduler Running")
+            await asyncio.sleep(1)
+
+    def SpawnService(self):
+        t = threading.Thread(target=self._schedLoop)
+        t.start()
+    def Stop(self):
+        self.stopChannel.set()
+        None
+
+    def InitSchedule(self):
+        alerts = self.config["alerts"]["daily"]
+        channelIds = self._getChannelIds()
+        for alertTime, opts in alerts.items():
+            msg = opts["msg"]
+            for alertDay in opts["days"]:
+                for channelId in channelIds:
+                    getattr(self.schedule.every(), alertDay).at(alertTime).do(self.QueueMessage, channelId=channelId, msg=msg)
+
+    def _getChannelIds(self):
+        if "channelIds" in self.config["alerts"]:
+            return self.config["alerts"]["channelIds"]
+        else:
+            return [self._defaultChannelId()]
+
+    def _defaultChannelId(self):
+        return os.getenv("DISCORD_DEFAULT_CHANNELID", default=self.config["defaultChannelId"])
+
+
+    def QueueMessage(self, channelId, msg):
+        asyncio.get_event_loop().create_task(
+            self.MessageChannel(channelId, msg)
+        )
+
+    async def MessageChannel(self, channelId, msg):
+        print("Messaging channel: {} with text: {}".format(channelId,msg))
+        await self.client.wait_until_ready()
+        channel = self.client.get_channel(channelId)
+        if channel is not None and channel.type == discord.ChannelType.text:
+            await channel.send(msg)
+        else:
+            # TODO: Log instead?
+            print("ChannelId: {} is not a text channel or does not exists for writing.".format(channelId))
+
+    async def Broadcast(self, msg):
         await self.client.wait_until_ready()
         guilds = self.client.guilds
         for guild in guilds:
             for channel in guild.channels:
                 print("Assessing Channel({}): {}".format(channel.type, channel.name))
                 if channel.type == discord.ChannelType.text:
-                    if self.config['discord']['alertChannels'] is not None and channel.name in self.config['discord']['alertChannels']:
-                        print("Alerting {}".format( guild ))
-                        await channel.send("Configured: {} {}:{}".format(msg, self.time().hour, self.time().minute))
-                    else:
-                        await channel.send("Unconfigured: {} {}:{}".format(msg, self.time().hour, self.time().minute))
-                        print("Skipping {}".format( guild ))
+                    print(
+                        "Alerting Channel - ID: \"{}\", Name: \"{}\", Type: \"{}\""
+                        .format(channel.id, channel.name, channel.type)
+                    )
+                    await channel.send(msg)
 
     async def ListGuilds(self):
         await self.client.wait_until_ready()
@@ -64,13 +129,14 @@ class DiscordAlertBot:
                     .format(channel.id, channel.name, channel.type)
                 )
 
-    def Stop(self):
-        None
-
 ## Don't like this approach. Will remove example
 async def AlertMktOpens():
     await client.wait_until_ready()
     msg_sent = False
+    time = datetime.datetime.now
+    test_min = self.time().minute+1
+    test_hr = self.time().hour
+
     while True:
         if time().hour == 17 and (time().minute == test_min or time().minute == test_min+2):
             if not msg_sent:
@@ -80,4 +146,5 @@ async def AlertMktOpens():
             print("{}:{}:{}".format(time().hour, time().minute, time().second))
             msg_sent = False
         await asyncio.sleep(1)
+
 
