@@ -113,10 +113,14 @@ as root:
 useradd --system -d /opt/discord-bots -s /sbin/nologin discord
 mkdir /opt/discord-bots
 cd /opt/discord-bots
+mkdir etc
 git clone https://github.com/RileyR387/discord-alert-bot.git
 cd discord-alert-bot
 python3 -m venv venv
 ./venv/bin/pip3 install .
+cp default.yaml /opt/discord-bots/etc/discord-alert-bot.yaml
+# configure the bot by populating /opt/discord-bots/etc/discord-alert-bot.yaml with channel id's and bot token by hand
+
 cp systemd/discord-alert-bot.service /etc/systemd/system/discord-alert-bot.service
 systemctl daemon-reload
 systemctl enable discord-alert-bot
