@@ -17,6 +17,7 @@ setup(
     author='Riley Raschke',
     author_email='riley@rrappsdev.com',
     scripts=['discord-alert-bot.py'],
+    packages=['bot','config'],
     url='https://github.com/RileyR387/discord-alert-bot',
     license='LICENSE',
     description='Discord bot for scheduled notifications.',

@@ -1,0 +1,15 @@
+
+[Unit]
+Description=Discord alert bot
+After=syslog.target network.target
+
+[Service]
+Type=simple
+PIDFile=/opt/discord-bots/var/discord-alert-bot.pid
+#EnvironmentFile=
+ExecStart=/opt/discord-bots/discord-alert-bot/venv/bin/discord-alert-bot.py
+User=discord
+
+[Install]
+WantedBy=multi-user.target
+

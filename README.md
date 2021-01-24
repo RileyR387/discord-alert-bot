@@ -106,3 +106,24 @@ alerts:
 For information on creating bot tokens check out:
   - https://www.freecodecamp.org/news/create-a-discord-bot-with-python/
 
+
+### Systemd Install
+as root:
+```
+useradd --system -d /opt/discord-bots -s /sbin/nologin discord
+mkdir /opt/discord-bots
+cd /opt/discord-bots
+git clone https://github.com/RileyR387/discord-alert-bot.git
+cd discord-alert-bot
+python3 -m venv venv
+./venv/bin/pip3 install .
+cp systemd/discord-alert-bot.service /etc/systemd/system/discord-alert-bot.service
+systemctl daemon-reload
+systemctl enable discord-alert-bot
+systemctl start discord-alert-bot
+systemctl status discord-alert-bot
+# done!
+# view log:
+journalctl -n 100 -u discord-alert-bot
+```
+
