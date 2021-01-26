@@ -2,34 +2,34 @@
 
 alerts:
   daily:
-    "19:00":
+    - time: "19:00"
       days: [sunday,monday,tuesday,wednesday,thursday]
       msg: "The TSE (Tokyo Stock Exchange) is now open"
-    "20:15":
+    - time: "20:15"
       days: [sunday,monday,tuesday,wednesday,thursday]
       msg:  "The SSE (Shanghai Stock Exchange) is now open"
-    "20:30":
+    - time: "20:30"
       days: [sunday,monday,tuesday,wednesday,thursday]
       msg:  "The HKE (Hong Kong Stock Exchange) is now open"
-    "01:00":
+    - time: "01:00"
       days: [monday,tuesday,wednesday,thursday,friday]
       msg:  "The TSE (Tokyo Stock Exchange) is now closed"
-    "02:00":
+    - time: "02:00"
       days: [monday,tuesday,wednesday,thursday,friday]
       msg:  "The LSE (London Stock Exchange) is now open"
-    "02:00":
+    - time: "02:00"
       days: [monday,tuesday,wednesday,thursday,friday]
       msg:  "The SSE (Shanghai Stock Exchange) is now closed"
-    "03:00":
+    - time: "03:00"
       days: [monday,tuesday,wednesday,thursday,friday]
       msg:  "The HKE (Hong Kong Stock Exchange) is now closed"
-    "08:30":
+    - time: "08:30"
       days: [monday,tuesday,wednesday,thursday,friday]
       msg:  "The cash market is now open! Have a great trading day!"
-    "10:30":
+    - time: "10:30"
       days: [monday,tuesday,wednesday,thursday,friday]
       msg:  "The LSE (London Stock Exchange) is now closed"
-    "15:00":
+    - time: "15:00"
       days: [monday,tuesday,wednesday,thursday,friday]
       msg:  "The cash market is now closed! Hope you had a great trading day!"
 

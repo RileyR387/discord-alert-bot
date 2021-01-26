@@ -13,7 +13,7 @@ dev_requires = [
 
 setup(
     name='discord-alert-bot',
-    version='0.0.1',
+    version='0.0.2',
     author='Riley Raschke',
     author_email='riley@rrappsdev.com',
     scripts=['discord-alert-bot.py'],

@@ -23,7 +23,7 @@ class DiscordAlertBot:
             self.InitSchedule()
 
         if self.args.test:
-            self.schedule.every(10).seconds.do(self.QueueMessage, channelId=self._defaultChannelId(), msg="Test Message")
+            self._TestDailyJob()
 
     async def RunArgs(self):
         if self.args.listGuilds:
@@ -56,7 +56,7 @@ class DiscordAlertBot:
     async def _schedLoopAsync(self):
         while not self.stopChannel.is_set():
             self.schedule.run_pending()
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.3)
         return
 
     def Stop(self):
@@ -66,11 +66,12 @@ class DiscordAlertBot:
     def InitSchedule(self):
         alerts = self.config["alerts"]["daily"]
         channelIds = self._getChannelIds()
-        for alertTime, opts in alerts.items():
-            msg = opts["msg"]
-            for alertDay in opts["days"]:
+        for alert in alerts:
+            msg = alert["msg"]
+            for alertDay in alert["days"]:
                 for channelId in channelIds:
-                    getattr(self.schedule.every(), alertDay).at(alertTime).do(self.QueueMessage, channelId=channelId, msg=msg)
+                    job = ThreadedAlertJob( self.QueueMessage, channelId, msg )
+                    getattr(self.schedule.every(), alertDay).at(alert["time"]).do(job.Run)
 
     def QueueMessage(self, channelId, msg):
         asyncio.get_event_loop().create_task(
@@ -128,4 +129,32 @@ class DiscordAlertBot:
             print("Please set DISCORD_DEFAULT_CHANNELID in environment or defaultChannelId in config")
             sys.exit(1)
         return res
+
+    def _TestDailyJob(self):
+        time = datetime.datetime.now
+        dow = time().strftime("%A").lower()
+        t_hr = time().hour
+        t_min = time().minute
+        t_min += 1
+        if t_min >= 60: t_min = 0; t_hr += 1;
+        if t_hr >= 24: t_hr = 0;
+        t = ("%02d" % t_hr) + ":" + ("%02d" % t_min)
+        print("Using test time of: " + dow + " " + t)
+        job1 = ThreadedAlertJob( self.QueueMessage, self._defaultChannelId(), "Test Message 1" )
+        job2 = ThreadedAlertJob( self.QueueMessage, self._defaultChannelId(), "Test Message 2" )
+        getattr(self.schedule.every(), dow).at(t).do(job1.Run)
+        getattr(self.schedule.every(), dow).at(t).do(job2.Run)
+
+class ThreadedAlertJob:
+    def __init__(self, messageFunc, channelId, message):
+        self.messageFunc = messageFunc
+        self.message = message
+        self.channelId = channelId
+
+    def Run(self):
+        alertThread = threading.Thread(target=self._run())
+        alertThread.start()
+
+    def _run(self):
+        self.messageFunc( self.channelId, self.message )
 

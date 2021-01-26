@@ -15,7 +15,11 @@ def LoadConfig(confFile: str) -> dict:
     try:
         with open( confFile, 'r') as stream:
             return yaml.load(stream, Loader=yaml.SafeLoader);
+    except OSError as e:
+        # TODO: Log location with trace or debug level?
+        return None
     except Exception as e:
+        print( "Failed to load config with error: {}".format(e))
         return None
 
 def SearchConfigs(searchPaths: list) -> dict:
