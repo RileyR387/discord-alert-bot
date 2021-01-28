@@ -56,7 +56,7 @@ class DiscordAlertBot:
     async def _schedLoopAsync(self):
         while not self.stopChannel.is_set():
             self.schedule.run_pending()
-            await asyncio.sleep(0.3)
+            await asyncio.sleep(0.9)
         return
 
     def Stop(self):
