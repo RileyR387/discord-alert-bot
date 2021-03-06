@@ -18,6 +18,7 @@ class DiscordAlertBot:
         self.pluginModules = plugins
         self.plugins = []
         self.args = args
+        self.guilds = []
 
         self.stopChannel = threading.Event()
         self.schedule = schedule
@@ -30,6 +31,9 @@ class DiscordAlertBot:
             self._TestDailyJob()
 
     async def RunArgs(self):
+
+        await self.cacheGuilds()
+
         if self.args.listGuilds:
             await self.ListGuilds()
             await self.client.close()
@@ -89,15 +93,26 @@ class DiscordAlertBot:
         if isinstance(msgOps, str):
             self.QueueMessage( self._defaultChannelId(), msgOps )
         elif isinstance(msgOps, dict):
-            if 'msg' not in msgOps.keys():
+            msgKeys = msgOps.keys()
+            if 'msg' not in msgKeys:
                 print("Message dictionary should be of form: {msg:\"message text\", channelid: \"fdafdsfdsa\"}")
                 return
 
-            if 'channelid' in msgOps.keys():
+            if 'BROADCAST' in msgKeys and msgOps['BROADCAST']:
+                self._pluginBroadcast(msgOps['msg'])
+
+            if 'channelid' in msgKeys:
                 self.QueueMessage( msgOps['channelid'], msgOps['msg'] )
-            if 'channelids' in msgOps.keys():
+
+            if 'channelids' in msgKeys:
                 for chanID in msgOps['channelids']:
                     self.QueueMessage( chanID, msgOps['msg'] )
+
+    def _pluginBroadcast(self, msg):
+        for g in self.guilds:
+            if g['channelType'] == discord.ChannelType.text:
+                self.QueueMessage( g['channelID'], msg )
+
 
     def QueueMessage(self, channelId, msg):
         asyncio.get_event_loop().create_task(
@@ -114,6 +129,17 @@ class DiscordAlertBot:
             # TODO: Log instead?
             print("ChannelId: {} is not a text channel or does not exists for writing.".format(channelId))
 
+    async def cacheGuilds(self):
+        await self.client.wait_until_ready()
+        for guild in self.client.guilds:
+            for channel in guild.channels:
+                self.guilds.append({
+                    "server": guild.name,
+                    "channelName": channel.name,
+                    "channelID": channel.id,
+                    "channelType": channel.type
+                })
+
     async def Broadcast(self, msg):
         await self.client.wait_until_ready()
         guilds = self.client.guilds
@@ -128,7 +154,7 @@ class DiscordAlertBot:
                     await channel.send(msg)
 
     async def ListGuilds(self):
-        await ListGuilds(self.client)
+        ListGuilds(self.guilds)
 
     async def ProcessMessage(self, message):
         if message.author == self.client.user:
