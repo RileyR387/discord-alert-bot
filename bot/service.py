@@ -88,11 +88,19 @@ class DiscordAlertBot:
         alerts = self.config["alerts"]["daily"]
         channelIds = self._getChannelIds()
         for alert in alerts:
-            msg = alert["msg"]
             for alertDay in alert["days"]:
                 for channelId in channelIds:
-                    job = ThreadedAlertJob( self.QueueMessage, channelId, msg )
-                    getattr(self.schedule.every(), alertDay).at(alert["time"]).do(job.Run)
+                    if "msg" in alert.keys():
+                        job = ThreadedAlertJob( self.QueueMessage, channelId, alert["msg"] )
+                        getattr(self.schedule.every(), alertDay).at(alert["time"]).do(job.Run)
+                    if "plugin" in alert.keys():
+                        plugin = self._GetPlugin(alert["plugin"])
+                        getattr(self.schedule.every(), alertDay).at(alert["time"]).do(plugin.Job)
+
+    def _GetPlugin(self, plugName):
+        for plugin in self.plugins:
+            if plugin["name"] == plugName:
+                return plugin['runtime']
 
     def _PluginMsgCallback(self, msgOps):
         if isinstance(msgOps, str):

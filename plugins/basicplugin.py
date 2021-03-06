@@ -16,7 +16,7 @@ class BotPlugin:
 
     # The alert bot service can be configured to run this based on primary services config
     def Job(self):
-        None
+        self.SendMessage("Scheduled job from a plugin!")
 
     # Run custom threads/refreshes here, using `self.SendMessage`
     # on demand for the default or configured channel ID's

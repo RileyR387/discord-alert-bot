@@ -2,6 +2,9 @@
 
 alerts:
   daily:
+    - time: "12:40"
+      days: [saturday]
+      plugin: "basicplugin"
     - time: "19:00"
       days: [sunday,monday,tuesday,wednesday,thursday]
       msg: "The TSE (Tokyo Stock Exchange) is now open"
