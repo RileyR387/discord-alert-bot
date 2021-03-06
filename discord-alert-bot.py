@@ -6,7 +6,7 @@ import argparse
 import discord
 
 # Local config loader package - unpublished
-from config.simple import AutoLoad
+from config.simple import AutoLoad, LoadConfig
 
 # Local Bot
 from bot.service import DiscordAlertBot
