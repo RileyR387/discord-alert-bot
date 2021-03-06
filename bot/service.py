@@ -102,13 +102,7 @@ class DiscordAlertBot:
                     await channel.send(msg)
 
     async def ListGuilds(self):
-        await self.client.wait_until_ready()
-        for guild in self.client.guilds:
-            for channel in guild.channels:
-                print(
-                    "Server: \"{}\" - ChannelID: \"{}\", ChannelName: \"{}\", ChannelType: \"{}\""
-                    .format(guild.name, channel.id, channel.name, channel.type)
-                )
+        await ListGuilds(self.client)
 
     def _getChannelIds(self):
         if "channelIds" in self.config["alerts"]:
