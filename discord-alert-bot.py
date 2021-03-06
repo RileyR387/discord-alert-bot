@@ -5,10 +5,6 @@ import os
 import argparse
 import discord
 
-# Plugin loading libs
-import importlib
-import pkgutil
-
 # Local config loader package - unpublished
 from config.simple import AutoLoad, LoadConfig
 
@@ -46,20 +42,9 @@ if token is None:
     print("Please set DISCORD_BOT_TOKEN in environment or discordBotToken in config")
     sys.exit(1)
 
-## Load Plugins
-def iter_namespace(ns_pkg):
-    return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
-
-plugins = {}
-if len(args.plugins) != 0:
-    plugins = {
-        name: importlib.import_module('plugins.' + name)
-            for name in args.plugins
-    }
-
 ## Create Client
 client = discord.Client()
-bot    = DiscordAlertBot(client, conf, plugins, args)
+bot    = DiscordAlertBot(client, conf, args.plugins, args)
 
 ## Client Handlers
 @client.event

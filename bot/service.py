@@ -8,6 +8,9 @@ import time
 import asyncio
 import threading
 
+# Plugin loading libs
+import importlib
+
 from .util import ListGuilds
 from .msgprocessor import ProcessMessage
 
@@ -15,7 +18,7 @@ class DiscordAlertBot:
     def __init__(self, client, config, plugins, args):
         self.client = client
         self.config = config
-        self.pluginModules = plugins
+        self.pluginNames = plugins
         self.plugins = []
         self.args = args
         self.guilds = []
@@ -28,7 +31,7 @@ class DiscordAlertBot:
             self.InitSchedule()
 
         if self.args.test:
-            self._TestDailyJob()
+            self._testDailyJob()
 
     async def RunArgs(self):
 
@@ -59,12 +62,39 @@ class DiscordAlertBot:
         return
 
     def InitPlugins(self):
-        for plugin in self.pluginModules.keys():
-            print( "Loading plugin: %s" % plugin )
-            self.plugins.append({
-                'name': plugin,
-                'runtime': self.pluginModules[plugin].BotPlugin(self._PluginMsgCallback),
-            })
+        for plugin in self.pluginNames:
+            self._loadPlugin( plugin )
+
+    def _getPlugin(self, plugName):
+        for plugin in self.plugins:
+            if plugin["name"] == plugName:
+                return plugin
+        return None
+
+    def _loadPlugin(self, pluginName):
+        plug = self._getPlugin(pluginName)
+        if plug is not None:
+            return plug
+
+        pluginLib = None
+        try:
+            if '.' not in pluginName:
+                pluginLib = importlib.import_module('plugins.' + pluginName)
+            else:
+                # Maybe this will support external plugins?
+                pluginLib = importlib.import_module(pluginName)
+        except ModuleNotFoundError as x:
+            print("Failed to load plugin({}): {}".format(pluginName, x))
+            return None
+
+        plug = {
+            'name': pluginName,
+            'runtime': pluginLib.BotPlugin(self._pluginMsgCallback),
+        }
+        print( "Loaded plugin: %s" % pluginName )
+        self.plugins.append( plug )
+        return plug
+
 
     async def RunPlugins(self):
         for plugin in self.plugins:
@@ -82,7 +112,8 @@ class DiscordAlertBot:
 
     def Stop(self):
         self.stopChannel.set()
-        None
+        for plugin in self.plugins:
+            plugin['runtime'].Stop()
 
     def InitSchedule(self):
         alerts = self.config["alerts"]["daily"]
@@ -94,15 +125,11 @@ class DiscordAlertBot:
                         job = ThreadedAlertJob( self.QueueMessage, channelId, alert["msg"] )
                         getattr(self.schedule.every(), alertDay).at(alert["time"]).do(job.Run)
                     if "plugin" in alert.keys():
-                        plugin = self._GetPlugin(alert["plugin"])
-                        getattr(self.schedule.every(), alertDay).at(alert["time"]).do(plugin.Job)
+                        plugin = self._loadPlugin(alert["plugin"])
+                        if plugin is not None:
+                            getattr(self.schedule.every(), alertDay).at(alert["time"]).do(plugin['runtime'].Job)
 
-    def _GetPlugin(self, plugName):
-        for plugin in self.plugins:
-            if plugin["name"] == plugName:
-                return plugin['runtime']
-
-    def _PluginMsgCallback(self, msgOps):
+    def _pluginMsgCallback(self, msgOps):
         if isinstance(msgOps, str):
             self.QueueMessage( self._defaultChannelId(), msgOps )
         elif isinstance(msgOps, dict):
@@ -198,7 +225,7 @@ class DiscordAlertBot:
             sys.exit(1)
         return res
 
-    def _TestDailyJob(self):
+    def _testDailyJob(self):
         time = datetime.datetime.now
         dow = time().strftime("%A").lower()
         t_hr = time().hour
