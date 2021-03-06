@@ -13,6 +13,13 @@ class BotPlugin:
     def __init__(self, msgCallback):
         self.name = "basicplugin"
         self.SendMessage = msgCallback
+        self.initEnv()
+
+    def initEnv(self):
+        self.defaultChannel = int(os.getenv('BASICPLUGIN_DEFAULT_CHANNEL_ID', default='660676159259934723'))
+        self.channels = []
+        for channel in os.getenv('BASICPLUGIN_CHANNEL_IDS', default='660676159259934723, 807086041063227412').split(','):
+            self.channels.append(int(channel.strip()))
 
     # Parent is stopping, maintenance op for clean exit
     def Stop(self):
@@ -30,16 +37,14 @@ class BotPlugin:
 
         # custom single channel
         self.SendMessage({
-            'channelid': 660676159259934723,
+            'channelid': self.defaultChannel,
             'msg': "Test single channel plugin message",
         })
         # multi custom channel
-        '''
         self.SendMessage({
-            'channelids': [ 660676159259934723, 807086041063227412 ],
+            'channelids': self.channels,
             'msg': "Test multi channel plugin message",
         })
-        '''
         # broadcast to all text channels
         '''
         self.SendMessage({
