@@ -55,6 +55,7 @@ class DiscordAlertBot:
             await self.client.close()
             return
 
+        await self.RunPlugins()
         return
 
     def InitPlugins(self):
@@ -64,6 +65,10 @@ class DiscordAlertBot:
                 'name': plugin,
                 'runtime': self.pluginModules[plugin].BotPlugin(self._PluginMsgCallback),
             })
+
+    async def RunPlugins(self):
+        for plugin in self.plugins:
+            plugin['runtime'].Run()
 
     async def RunSchedule(self):
         self.stopChannel.clear()

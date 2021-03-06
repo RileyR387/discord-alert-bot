@@ -1,15 +1,26 @@
 
 import os
 
+'''
+Plugin Abstract
+
+Plugins configuration is best stored in environment variables for external control with possibly sane defaults
+
+All plugins are of class name "BotPlugin"
+'''
+
 class BotPlugin:
     def __init__(self, msgCallback):
         self.name = "basicplugin"
         self.SendMessage = msgCallback
 
-    async def ProcessMessage(self, message):
-        if message.content.startswith('?testplugin'):
-            await message.channel.send('Hello from a plugin!')
+    # The alert bot service can be configured to run this based on primary services config
+    def Job(self):
+        None
 
+    # Run custom threads/refreshes here, using `self.SendMessage`
+    # on demand for the default or configured channel ID's
+    def Run(self):
         # Bot default channel
         self.SendMessage("Basic Test Message Sending")
 
@@ -28,4 +39,9 @@ class BotPlugin:
         ##    'BROADCAST': True ,
         ##    'msg': "Test all channel plugin message"
         ##})
+
+    # Custom message interpriters for the plugin
+    async def ProcessMessage(self, message):
+        if message.content.startswith('?testplugin'):
+            await message.channel.send('Hello from a plugin!')
 
