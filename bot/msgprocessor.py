@@ -1,8 +1,5 @@
 
-async def ProcessMessage(client, message):
-    if message.author == client.user:
-        return
-
+async def ProcessMessage(message):
     if message.content.startswith('?hello'):
-        await message.channel.send('Hello!')
+        await message.channel.send('Hello from development!')
 

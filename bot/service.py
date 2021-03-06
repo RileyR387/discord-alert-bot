@@ -9,17 +9,21 @@ import asyncio
 import threading
 
 from .util import ListGuilds
+from .msgprocessor import ProcessMessage
 
 class DiscordAlertBot:
-    def __init__(self, client, config, args):
+    def __init__(self, client, config, plugins, args):
         self.client = client
         self.config = config
+        self.pluginModules = plugins
+        self.plugins = []
         self.args = args
 
         self.stopChannel = threading.Event()
         self.schedule = schedule
 
         if not self.args.listGuilds:
+            self.InitPlugins()
             self.InitSchedule()
 
         if self.args.test:
@@ -49,6 +53,14 @@ class DiscordAlertBot:
 
         return
 
+    def InitPlugins(self):
+        for plugin in self.pluginModules.keys():
+            print( "Loading plugin: %s" % plugin )
+            self.plugins.append({
+                'name': plugin,
+                'runtime': self.pluginModules[plugin].BotPlugin(self._PluginMsgCallback),
+            })
+
     async def RunSchedule(self):
         self.stopChannel.clear()
         await self._schedLoopAsync()
@@ -72,6 +84,20 @@ class DiscordAlertBot:
                 for channelId in channelIds:
                     job = ThreadedAlertJob( self.QueueMessage, channelId, msg )
                     getattr(self.schedule.every(), alertDay).at(alert["time"]).do(job.Run)
+
+    def _PluginMsgCallback(self, msgOps):
+        if isinstance(msgOps, str):
+            self.QueueMessage( self._defaultChannelId(), msgOps )
+        elif isinstance(msgOps, dict):
+            if 'msg' not in msgOps.keys():
+                print("Message dictionary should be of form: {msg:\"message text\", channelid: \"fdafdsfdsa\"}")
+                return
+
+            if 'channelid' in msgOps.keys():
+                self.QueueMessage( msgOps['channelid'], msgOps['msg'] )
+            if 'channelids' in msgOps.keys():
+                for chanID in msgOps['channelids']:
+                    self.QueueMessage( chanID, msgOps['msg'] )
 
     def QueueMessage(self, channelId, msg):
         asyncio.get_event_loop().create_task(
@@ -103,6 +129,15 @@ class DiscordAlertBot:
 
     async def ListGuilds(self):
         await ListGuilds(self.client)
+
+    async def ProcessMessage(self, message):
+        if message.author == self.client.user:
+            return
+
+        await ProcessMessage(message)
+
+        for plugin in self.plugins:
+            await plugin['runtime'].ProcessMessage(message)
 
     def _getChannelIds(self):
         if "channelIds" in self.config["alerts"]:

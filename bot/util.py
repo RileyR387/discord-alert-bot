@@ -10,3 +10,4 @@ async def ListGuilds(client):
                 "Server: \"{}\" - ChannelID: \"{}\", ChannelName: \"{}\", ChannelType: \"{}\""
                 .format(guild.name, channel.id, channel.name, channel.type)
             )
+

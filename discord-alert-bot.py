@@ -5,12 +5,15 @@ import os
 import argparse
 import discord
 
+# Plugin loading libs
+import importlib
+import pkgutil
+
 # Local config loader package - unpublished
 from config.simple import AutoLoad, LoadConfig
 
 # Local Bot
 from bot.service import DiscordAlertBot
-from bot.msgprocessor import ProcessMessage
 
 opts = argparse.ArgumentParser(
     description="Configurable discord alert bot"
@@ -21,6 +24,7 @@ opts.add_argument('-a', '--messageAll', type=str, metavar="msgText", help="Send 
 opts.add_argument('-m', '--message', type=str, metavar="msgText", help="Message a single channel, requires `-i`")
 opts.add_argument('-i', '--channelId', type=str, metavar="123456...", help="ChannelID to use with `--message`")
 opts.add_argument('-l', '--listGuilds', action="store_true", help="List all channels and their unique id's")
+opts.add_argument('-p', '--plugins', type=str, nargs="+", default='', help="Plugins to enable")
 opts.add_argument('-t', '--test', action="store_true", help="Send test message every 10 seconds")
 #opts.add_argument('-s', '--service', action="store_true", help="Run as service, don't terminate")
 
@@ -33,9 +37,6 @@ if args.config:
 else:
     conf = AutoLoad(__file__)
 
-client = discord.Client()
-bot    = DiscordAlertBot(client, conf, args)
-
 ## Verify we have a token
 token = None
 if "discordBotToken" in conf:
@@ -45,6 +46,21 @@ if token is None:
     print("Please set DISCORD_BOT_TOKEN in environment or discordBotToken in config")
     sys.exit(1)
 
+## Load Plugins
+def iter_namespace(ns_pkg):
+    return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
+
+plugins = {}
+if len(args.plugins) != 0:
+    plugins = {
+        name: importlib.import_module('plugins.' + name)
+            for name in args.plugins
+    }
+
+## Create Client
+client = discord.Client()
+bot    = DiscordAlertBot(client, conf, plugins, args)
+
 ## Client Handlers
 @client.event
 async def on_ready():
@@ -53,7 +69,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    await ProcessMessage(client, message)
+    await bot.ProcessMessage(message)
 
 async def RunBotLoop():
     await client.wait_until_ready()
