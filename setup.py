@@ -13,11 +13,11 @@ dev_requires = [
 
 setup(
     name='discord-alert-bot',
-    version='0.0.7',
+    version='0.0.8',
     author='Riley Raschke',
     author_email='riley@rrappsdev.com',
     scripts=['discord-alert-bot.py'],
-    packages=['bot','config','plugin'],
+    packages=['bot','config','plugins'],
     url='https://github.com/RileyR387/discord-alert-bot',
     license='LICENSE',
     description='Discord bot for scheduled notifications.',

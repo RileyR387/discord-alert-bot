@@ -98,7 +98,10 @@ class DiscordAlertBot:
 
     async def RunPlugins(self):
         for plugin in self.plugins:
-            plugin['runtime'].Run()
+            asyncio.get_event_loop().create_task(
+                plugin['runtime'].Run()
+            )
+            print("Running plugin: " + plugin['name'])
 
     async def RunSchedule(self):
         self.stopChannel.clear()
