@@ -138,7 +138,7 @@ class DiscordAlertBot:
         elif isinstance(msgOps, dict):
             msgKeys = msgOps.keys()
             if 'msg' not in msgKeys:
-                print("Message dictionary should be of form: {msg:\"message text\", channelid: \"fdafdsfdsa\"}")
+                self.QueueMessage( self._defaultChannelId(), msgOps )
                 return
 
             if 'BROADCAST' in msgKeys and msgOps['BROADCAST']:
@@ -163,14 +163,20 @@ class DiscordAlertBot:
         )
 
     async def MessageChannel(self, channelId, msg):
-        print("Messaging channel: {} with text: {}".format(channelId,msg))
         await self.client.wait_until_ready()
         channel = self.client.get_channel(channelId)
-        if channel is not None and channel.type == discord.ChannelType.text:
-            await channel.send(msg)
-        else:
-            # TODO: Log instead?
+        if channel is None or channel.type != discord.ChannelType.text:
             print("ChannelId: {} is not a text channel or does not exists for writing.".format(channelId))
+
+        if isinstance(msg, str):
+            print("Messaging channel: {} with text: {}".format(channelId,msg))
+            await channel.send(msg)
+        elif isinstance(msg, dict):
+            if msg['type'] == "rich":
+                richMsg = discord.Embed(**msg)
+                await channel.send(embed=richMsg)
+            else:
+                print("Unknow non-text message type: {}".format( msg['type'] ))
 
     async def cacheGuilds(self):
         await self.client.wait_until_ready()
