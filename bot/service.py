@@ -119,7 +119,13 @@ class DiscordAlertBot:
             plugin['runtime'].Stop()
 
     def InitSchedule(self):
+        if "alerts" not in self.config.keys():
+            return
+        if "daily" not in self.config['alerts'].keys():
+            return
         alerts = self.config["alerts"]["daily"]
+        if alerts is None:
+            return
         channelIds = self._getChannelIds()
         for alert in alerts:
             for alertDay in alert["days"]:
